@@ -1,0 +1,153 @@
+{
+  "info": {
+    "name": "Quiz App (Java 11, Spring Boot 2.7)",
+    "_postman_id": "b6f0f6c2-4a1f-4d7e-97b5-1762790611",
+    "description": "Postman collection for Quiz App REST APIs: create quiz, fetch quiz, submit answers.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Admin - Create Quiz (Sample: Java Basics)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/quizzes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "quizzes"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"title\": \"Java Basics\", \"questions\": [{\"type\": \"MCQ\", \"prompt\": \"Default value of int field in a class?\", \"options\": [\"0\", \"1\", \"null\"], \"correctText\": null}, {\"type\": \"TRUE_FALSE\", \"prompt\": \"String is immutable in Java\", \"options\": null, \"correctText\": \"true\"}, {\"type\": \"TEXT\", \"prompt\": \"Explain JVM vs JRE\", \"options\": null, \"correctText\": null}]}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 201', function () { pm.response.to.have.status(201); });",
+              "",
+              "const res = pm.response.json();",
+              "pm.test('Response has id and questions', function(){",
+              "  pm.expect(res).to.have.property('id');",
+              "  pm.expect(res).to.have.property('questions');",
+              "});",
+              "",
+              "// Save quizId to environment",
+              "pm.environment.set('quizId', res.id);",
+              "",
+              "// Save question IDs (assuming order preserved)",
+              "if (Array.isArray(res.questions)) {",
+              "  res.questions.forEach((q, idx) => {",
+              "    pm.environment.set(`q${idx+1}Id`, q.id);",
+              "    if (q.type === 'MCQ' && Array.isArray(q.options) && q.options.length) {",
+              "      // first option is correct by service default",
+              "      pm.environment.set(`q${idx+1}Opt1Id`, q.options[0].id);",
+              "    }",
+              "  });",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public - Get Quiz by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/public/quizzes/{{quizId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "public",
+            "quizzes",
+            "{{quizId}}"
+          ]
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "const res = pm.response.json();",
+              "pm.test('Has title and questions', function(){",
+              "  pm.expect(res).to.have.property('title');",
+              "  pm.expect(res).to.have.property('questions');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Public - Submit Quiz (uses captured IDs)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/public/quizzes/{{quizId}}/submissions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "public",
+            "quizzes",
+            "{{quizId}}",
+            "submissions"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"answers\": [{\"questionId\": \"{{q1Id}}\", \"selectedOptionId\": \"{{q1Opt1Id}}\", \"answerText\": null}, {\"questionId\": \"{{q2Id}}\", \"selectedOptionId\": null, \"answerText\": \"true\"}, {\"questionId\": \"{{q3Id}}\", \"selectedOptionId\": null, \"answerText\": \"JVM executes bytecode; JRE = JVM + libs.\"}]}"
+        }
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () { pm.response.to.have.status(200); });",
+              "const res = pm.response.json();",
+              "pm.test('Submission has score fields', function(){",
+              "  pm.expect(res).to.have.property('submissionId');",
+              "  pm.expect(res).to.have.property('totalQuestions');",
+              "  pm.expect(res).to.have.property('autoScore');",
+              "});",
+              "pm.environment.set('submissionId', res.submissionId);"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

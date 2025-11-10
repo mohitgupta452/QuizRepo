@@ -1,6 +1,6 @@
 # QuizRepo
 
-Start your app on port 8080 (or edit baseUrl in the environment).
+Start app on port 8080 (or edit baseUrl in the environment).
 
 In Postman: Import → Upload Files → pick both JSON files.
 
